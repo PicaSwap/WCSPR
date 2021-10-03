@@ -10,7 +10,7 @@ use casper_types::{
     runtime_args, AsymmetricType, CLTyped, ContractHash, Key, PublicKey, RuntimeArgs, U256, U512,
 };
 
-const CONTRACT_ERC20_TOKEN: &str = "erc20_token.wasm";
+const CONTRACT_ERC20_TOKEN: &str = "wcspr.wasm";
 const CONTRACT_KEY_NAME: &str = "erc20_token_contract";
 
 fn blake2b256(item_key_string: &[u8]) -> Box<[u8]> {
