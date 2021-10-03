@@ -12,5 +12,4 @@ Any operation that ends with this contract holding Wrapped Casper is prohibited.
 
 ## The Friendly Hackathon: Start Building On Casper!
 
-Project is participant of Open topic bounty
-https://gitcoin.co/issue/casper-network/gitcoin-hackathon/26/100026594
+Project is participant of [Open topic](https://gitcoin.co/issue/casper-network/gitcoin-hackathon/26/100026594) bounty
