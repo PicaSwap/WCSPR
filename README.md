@@ -12,7 +12,9 @@ Any operation that ends with this contract holding Wrapped Casper is prohibited.
 
 ## Interaction
 
-Would be represented on [**Picaswap**](http://www.picaswap.io/) DEX.
+Would be represented on **Picaswap** DEX.
+https://github.com/PicaSwap/Picaswap
+http://www.picaswap.io/
 
 ## The Friendly Hackathon: Start Building On Casper!
 
