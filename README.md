@@ -10,6 +10,10 @@ Any operation that ends with this contract holding Wrapped Casper is prohibited.
 
 2. `withdraw` Casper from this contract by unwrapping WCSPR from your wallet.
 
+## Interaction
+
+Would be represented on [**Picaswap**](http://www.picaswap.io/) DEX.
+
 ## The Friendly Hackathon: Start Building On Casper!
 
 Project is participant of [Open topic](https://gitcoin.co/issue/casper-network/gitcoin-hackathon/26/100026594) bounty
