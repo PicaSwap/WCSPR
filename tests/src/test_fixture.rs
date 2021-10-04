@@ -30,9 +30,9 @@ pub struct TestFixture {
 }
 
 impl TestFixture {
-    pub const TOKEN_NAME: &'static str = "Test ERC20";
-    pub const TOKEN_SYMBOL: &'static str = "TERC";
-    pub const TOKEN_DECIMALS: u8 = 8;
+    pub const TOKEN_NAME: &'static str = "Wrapped Casper";
+    pub const TOKEN_SYMBOL: &'static str = "WCSPR";
+    pub const TOKEN_DECIMALS: u8 = 9;
     const TOKEN_TOTAL_SUPPLY_AS_U64: u64 = 1000;
 
     pub fn token_total_supply() -> U256 {

@@ -6,9 +6,9 @@ Implementation of ERC20 token, representing wrapped version of CSPR (native toke
 
 Any operation that ends with this contract holding Wrapped Casper is prohibited.
 
-1. `deposit` Casper in this contract to receive Wrapped Casper (wcspr), which implements the ERC20 standard. wcspr is interchangeable with Casper in a 1:1 basis.
+1. `deposit` Casper in this contract to receive Wrapped Casper (WCSPR), which implements the ERC20 standard. WCSPR is interchangeable with Casper in a 1:1 basis.
 
-2. `withdraw` Casper from this contract by unwrapping wcspr from your wallet.
+2. `withdraw` Casper from this contract by unwrapping WCSPR from your wallet.
 
 ## Interaction
 
