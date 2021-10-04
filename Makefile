@@ -8,6 +8,7 @@ build-erc20:
 test: build-erc20
 	mkdir -p tests/wasm
 	cp wcspr/target/wasm32-unknown-unknown/release/wcspr.wasm tests/wasm
+	cp wcspr/target/wasm32-unknown-unknown/release/pre_deposit.wasm tests/wasm
 	cd tests && cargo test
 
 clippy:

@@ -87,6 +87,10 @@ pub extern "C" fn transfer_from() {
 }
 
 #[no_mangle]
+fn deposit() {
+}
+
+#[no_mangle]
 fn call() {
     let name: String = runtime::get_named_arg(NAME_RUNTIME_ARG_NAME);
     let symbol: String = runtime::get_named_arg(SYMBOL_RUNTIME_ARG_NAME);

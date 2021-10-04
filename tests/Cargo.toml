@@ -17,3 +17,8 @@ path = "src/integration_tests.rs"
 bench = false
 doctest = false
 
+[[bin]]
+name = "pre_deposit-tests"
+path = "src/pre_deposit.rs"
+bench = false
+doctest = false
