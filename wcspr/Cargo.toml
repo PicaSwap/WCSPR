@@ -15,6 +15,13 @@ bench = false
 doctest = false
 test = false
 
+[[bin]]
+name = "pre_deposit"
+path = "src/pre_deposit.rs"
+bench = false
+doctest = false
+test = false
+
 [profile.release]
 codegen-units = 1
 lto = true
