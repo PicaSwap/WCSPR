@@ -7,17 +7,18 @@ compile_error!("target arch should be wasm32: compile with '--target wasm32-unkn
 extern crate alloc;
 
 use alloc::string::String;
+use core::convert::TryInto;
 
-use casper_contract::{contract_api::runtime, unwrap_or_revert::UnwrapOrRevert};
+use casper_contract::{contract_api::{runtime, storage, system}, unwrap_or_revert::UnwrapOrRevert};
 use casper_erc20::{
     constants::{
         ADDRESS_RUNTIME_ARG_NAME, AMOUNT_RUNTIME_ARG_NAME, DECIMALS_RUNTIME_ARG_NAME,
         NAME_RUNTIME_ARG_NAME, OWNER_RUNTIME_ARG_NAME, RECIPIENT_RUNTIME_ARG_NAME,
         SPENDER_RUNTIME_ARG_NAME, SYMBOL_RUNTIME_ARG_NAME, TOTAL_SUPPLY_RUNTIME_ARG_NAME,
     },
-    Address, ERC20,
+    Address, ERC20, Error,
 };
-use casper_types::{CLValue, U256};
+use casper_types::{CLValue, CLTyped, U256, URef, U512, bytesrepr::{FromBytes, ToBytes}, system::CallStackElement};
 
 #[no_mangle]
 pub extern "C" fn name() {
@@ -88,6 +89,24 @@ pub extern "C" fn transfer_from() {
 
 #[no_mangle]
 fn deposit() {
+
+    // Get passed purse from pre_deposit
+    let tmp_purse: URef = runtime::get_named_arg("tmp_purse");
+
+    let cspr_amount: U512 = system::get_purse_balance(tmp_purse).unwrap_or_revert();
+    let cspr_amount_u256: U256 = U256::from(cspr_amount.as_u128());
+
+    let contract_main_purse: URef = get_key("main_purse").unwrap_or_revert();
+
+    // Save CSPR provided by user into our contract
+    let _ = system::transfer_from_purse_to_purse(tmp_purse, contract_main_purse, cspr_amount, None);
+
+    // Get account of the user who called the contract
+    let sender = get_immediate_caller_address().unwrap_or_revert();
+
+    // Issue WCSPR tokens to the sender
+    ERC20::default().mint(sender, cspr_amount_u256).unwrap_or_revert()
+
 }
 
 #[no_mangle]
@@ -98,4 +117,66 @@ fn call() {
     let total_supply = runtime::get_named_arg(TOTAL_SUPPLY_RUNTIME_ARG_NAME);
 
     let _token = ERC20::install(name, symbol, decimals, total_supply).unwrap_or_revert();
+}
+
+
+// Helper functions
+
+fn get_key<T: FromBytes + CLTyped>(name: &str) -> Option<T> {
+    match runtime::get_key(name) {
+        None => None,
+        Some(value) => {
+            let key = value.try_into().unwrap_or_revert();
+            let value = storage::read(key).unwrap_or_revert().unwrap_or_revert();
+            Some(value)
+        }
+    }
+}
+
+fn set_key<T: ToBytes + CLTyped>(name: &str, value: T) {
+    match runtime::get_key(name) {
+        Some(key) => {
+            let key_ref = key.try_into().unwrap_or_revert();
+            storage::write(key_ref, value);
+        }
+        None => {
+            let key = storage::new_uref(value).into();
+            runtime::put_key(name, key);
+        }
+    }
+}
+
+/// Gets the immediate call stack element of the current execution.
+fn get_immediate_call_stack_item() -> Option<CallStackElement> {
+    let call_stack = runtime::get_call_stack();
+    call_stack.into_iter().rev().nth(1)
+}
+
+/// Returns address based on a [`CallStackElement`].
+///
+/// For `Session` and `StoredSession` variants it will return account hash, and for `StoredContract`
+/// case it will use contract hash as the address.
+fn call_stack_element_to_address(call_stack_element: CallStackElement) -> Address {
+    match call_stack_element {
+        CallStackElement::Session { account_hash } => Address::from(account_hash),
+        CallStackElement::StoredSession { account_hash, .. } => {
+            // Stored session code acts in account's context, so if stored session wants to interact
+            // with an ERC20 token caller's address will be used.
+            Address::from(account_hash)
+        }
+        CallStackElement::StoredContract {
+            contract_package_hash,
+            ..
+        } => Address::from(contract_package_hash),
+    }
+}
+
+/// Gets the immediate session caller of the current execution.
+///
+/// This function ensures that only session code can execute this function, and disallows stored
+/// session/stored contracts.
+pub(crate) fn get_immediate_caller_address() -> Result<Address, Error> {
+    get_immediate_call_stack_item()
+        .map(call_stack_element_to_address)
+        .ok_or(Error::InvalidContext)
 }
