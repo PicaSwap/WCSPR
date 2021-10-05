@@ -110,6 +110,30 @@ fn deposit() {
 }
 
 #[no_mangle]
+fn withdraw() {
+    // how many wcspr tokens to withdraw
+    let wcspr_amount: U512 = runtime::get_named_arg("wcspr_amount");
+    let wcspr_amount_u256: U256 = U256::from(wcspr_amount.as_u128());
+
+    // Get account of the user who called the contract
+    let sender = get_immediate_caller_address().unwrap_or_revert();
+
+    let balance = ERC20::default().balance_of(sender);
+
+    let contract_main_purse: URef = get_key("main_purse").unwrap_or_revert();
+
+    if balance >= wcspr_amount_u256 {
+        system::transfer_from_purse_to_account(
+            contract_main_purse, 
+            *sender.as_account_hash().unwrap_or_revert(), 
+            wcspr_amount, 
+            None
+        ).unwrap_or_revert();
+        ERC20::default().burn(sender, wcspr_amount_u256).unwrap_or_revert();
+    }
+}
+
+#[no_mangle]
 fn call() {
     let name: String = runtime::get_named_arg(NAME_RUNTIME_ARG_NAME);
     let symbol: String = runtime::get_named_arg(SYMBOL_RUNTIME_ARG_NAME);
@@ -117,6 +141,18 @@ fn call() {
     let total_supply = runtime::get_named_arg(TOTAL_SUPPLY_RUNTIME_ARG_NAME);
 
     let _token = ERC20::install(name, symbol, decimals, total_supply).unwrap_or_revert();
+}
+
+#[no_mangle]
+pub extern "C" fn init() {
+    let value: Option<bool> = get_key("initialized"); 
+    match value {
+        Some(_) => {},
+        None => {
+            set_key("main_purse", system::create_purse());
+            set_key("initialized", true);
+        },
+    }
 }
 
 
