@@ -3,7 +3,7 @@ mod test_fixture;
 
 #[cfg(test)]
 mod tests {
-    use casper_types::{Key, U256};
+    use casper_types::{Key, U256, U512};
 
     use crate::test_fixture::{Sender, TestFixture};
 
@@ -17,6 +17,20 @@ mod tests {
             fixture.balance_of(Key::from(fixture.ali)),
             Some(TestFixture::token_total_supply())
         );
+    }
+
+    #[test]
+    fn should_deposit() {
+        let mut fixture = TestFixture::install_contract();
+
+        let cspr_deposit_amount = U512::from(42);
+        let expected_wcspr = U256::from(42);
+        let sender = Sender(fixture.ali);
+
+        fixture.deposit(sender, cspr_deposit_amount);
+
+        assert_eq!(fixture.balance_of(Key::from(fixture.ali)), Some(expected_wcspr));
+
     }
 
     #[test]

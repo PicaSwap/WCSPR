@@ -11,7 +11,10 @@ use casper_types::{
 };
 
 const CONTRACT_ERC20_TOKEN: &str = "wcspr.wasm";
+//const CONTRACT_KEY_NAME: &str = "wcspr_token_contract";
 const CONTRACT_KEY_NAME: &str = "erc20_token_contract";
+
+const CONTRACT_PRE_DEPOSIT: &str = "pre_deposit.wasm";
 
 fn blake2b256(item_key_string: &[u8]) -> Box<[u8]> {
     let mut hasher = VarBlake2b::new(32).unwrap();
@@ -34,10 +37,6 @@ impl TestFixture {
     pub const TOKEN_SYMBOL: &'static str = "WCSPR";
     pub const TOKEN_DECIMALS: u8 = 9;
     const TOKEN_TOTAL_SUPPLY_AS_U64: u64 = 1000;
-
-    pub fn token_total_supply() -> U256 {
-        Self::TOKEN_TOTAL_SUPPLY_AS_U64.into()
-    }
 
     pub fn install_contract() -> TestFixture {
         let ali = PublicKey::ed25519_from_bytes([3u8; 32]).unwrap();
@@ -107,6 +106,10 @@ impl TestFixture {
             .with_authorization_keys(&[address])
             .build();
         self.context.run(session);
+    }
+
+    pub fn token_total_supply() -> U256 {
+        Self::TOKEN_TOTAL_SUPPLY_AS_U64.into()
     }
 
     pub fn token_name(&self) -> String {
@@ -188,5 +191,18 @@ impl TestFixture {
                 consts::AMOUNT_RUNTIME_ARG_NAME => amount
             },
         );
+    }
+
+    pub fn deposit(&mut self, sender: Sender, cspr_amount: U512) {
+        let Sender(address) = sender;
+        let code = Code::from(CONTRACT_PRE_DEPOSIT);
+        let session = SessionBuilder::new(code, runtime_args!{
+            "cspr_amount" => cspr_amount,
+            "wcspr_contract_hash" => self.contract_hash()
+        })
+            .with_address(address)
+            .with_authorization_keys(&[address])
+            .build();
+        self.context.run(session);
     }
 }

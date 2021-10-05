@@ -6,6 +6,8 @@ compile_error!("target arch should be wasm32: compile with '--target wasm32-unkn
 
 extern crate alloc;
 
+//mod entry_points;
+
 use alloc::string::String;
 use core::convert::TryInto;
 
@@ -16,9 +18,11 @@ use casper_erc20::{
         NAME_RUNTIME_ARG_NAME, OWNER_RUNTIME_ARG_NAME, RECIPIENT_RUNTIME_ARG_NAME,
         SPENDER_RUNTIME_ARG_NAME, SYMBOL_RUNTIME_ARG_NAME, TOTAL_SUPPLY_RUNTIME_ARG_NAME,
     },
-    Address, ERC20, Error,
+    Address, ERC20, Error, entry_points
 };
 use casper_types::{CLValue, CLTyped, U256, URef, U512, bytesrepr::{FromBytes, ToBytes}, system::CallStackElement};
+
+const CONTRACT_KEY_NAME: &str = "wcspr_token_contract";
 
 #[no_mangle]
 pub extern "C" fn name() {
@@ -88,7 +92,7 @@ pub extern "C" fn transfer_from() {
 }
 
 #[no_mangle]
-fn deposit() {
+pub extern "C" fn deposit() {
 
     // Get passed purse from pre_deposit
     let tmp_purse: URef = runtime::get_named_arg("tmp_purse");
@@ -110,10 +114,10 @@ fn deposit() {
 }
 
 #[no_mangle]
-fn withdraw() {
+pub extern "C" fn withdraw() {
     // how many wcspr tokens to withdraw
-    let wcspr_amount: U512 = runtime::get_named_arg("wcspr_amount");
-    let wcspr_amount_u256: U256 = U256::from(wcspr_amount.as_u128());
+    let cspr_amount: U512 = runtime::get_named_arg("cspr_amount");
+    let cspr_amount_u256: U256 = U256::from(cspr_amount.as_u128());
 
     // Get account of the user who called the contract
     let sender = get_immediate_caller_address().unwrap_or_revert();
@@ -122,14 +126,14 @@ fn withdraw() {
 
     let contract_main_purse: URef = get_key("main_purse").unwrap_or_revert();
 
-    if balance >= wcspr_amount_u256 {
+    if balance >= cspr_amount_u256 {
         system::transfer_from_purse_to_account(
             contract_main_purse, 
             *sender.as_account_hash().unwrap_or_revert(), 
-            wcspr_amount, 
+            cspr_amount, 
             None
         ).unwrap_or_revert();
-        ERC20::default().burn(sender, wcspr_amount_u256).unwrap_or_revert();
+        ERC20::default().burn(sender, cspr_amount_u256).unwrap_or_revert();
     }
 }
 
@@ -138,9 +142,28 @@ fn call() {
     let name: String = runtime::get_named_arg(NAME_RUNTIME_ARG_NAME);
     let symbol: String = runtime::get_named_arg(SYMBOL_RUNTIME_ARG_NAME);
     let decimals = runtime::get_named_arg(DECIMALS_RUNTIME_ARG_NAME);
-    let total_supply = runtime::get_named_arg(TOTAL_SUPPLY_RUNTIME_ARG_NAME);
+    let initial_supply = runtime::get_named_arg(TOTAL_SUPPLY_RUNTIME_ARG_NAME);
 
-    let _token = ERC20::install(name, symbol, decimals, total_supply).unwrap_or_revert();
+    let _ = ERC20::install(name, symbol, decimals, initial_supply);
+
+    /*
+    ERC20::install_custom(
+        name,
+        symbol,
+        decimals,
+        initial_supply,
+        CONTRACT_KEY_NAME,
+        entry_points::default(),
+    ).unwrap_or_revert();
+
+    let key: Key = runtime::get_key("my_name").unwrap_or_revert();
+    let hash: HashAddr = key.into_hash().unwrap_or_revert();
+    let contract_hash = ContractHash::new(hash);
+
+    let _: () = runtime::call_contract(contract_hash, "init", RuntimeArgs::new());
+
+    */
+
 }
 
 #[no_mangle]
