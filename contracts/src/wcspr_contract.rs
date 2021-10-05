@@ -106,11 +106,15 @@ pub extern "C" fn deposit() {
     let cspr_amount: U512 = system::get_purse_balance(tmp_purse).unwrap_or_revert();
     let cspr_amount_u256: U256 = U256::from(cspr_amount.as_u128());
 
-    let contract_main_purse: URef = get_key("main_purse").unwrap_or_revert();
+    // TODO: why is it not working???
+    //let contract_main_purse: URef = get_key("main_purse").unwrap_or_revert();
+
+    let contract_main_purse_key = runtime::get_key("main_purse").unwrap_or_revert();
+    let contract_main_purse = contract_main_purse_key.as_uref().unwrap_or_revert();
 
     // TODO: this line causes test crash with ForgedReference URef
     // Save CSPR provided by user into our contract
-    //let _ = system::transfer_from_purse_to_purse(tmp_purse, contract_main_purse, cspr_amount, None);
+    let _ = system::transfer_from_purse_to_purse(tmp_purse, *contract_main_purse, cspr_amount, None);
 
     // Get account of the user who called the contract
     let sender = get_immediate_caller_address().unwrap_or_revert();
@@ -131,11 +135,12 @@ pub extern "C" fn withdraw() {
 
     let balance = ERC20::default().balance_of(sender);
 
-    let contract_main_purse: URef = get_key("main_purse").unwrap_or_revert();
+    let contract_main_purse_key = runtime::get_key("main_purse").unwrap_or_revert();
+    let contract_main_purse = contract_main_purse_key.as_uref().unwrap_or_revert();
 
     if balance >= cspr_amount_u256 {
         system::transfer_from_purse_to_account(
-            contract_main_purse, 
+            *contract_main_purse, 
             *sender.as_account_hash().unwrap_or_revert(), 
             cspr_amount, 
             None
@@ -183,13 +188,14 @@ fn call() {
 
 // Helper functions
 
+
 fn get_key<T: FromBytes + CLTyped>(name: &str) -> Option<T> {
     match runtime::get_key(name) {
         None => None,
         Some(value) => {
             let key = value.try_into().unwrap_or_revert();
-            let value = storage::read(key).unwrap_or_revert().unwrap_or_revert();
-            Some(value)
+            let result = storage::read(key).unwrap_or_revert().unwrap_or_revert();
+            Some(result)
         }
     }
 }

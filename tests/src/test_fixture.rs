@@ -205,4 +205,15 @@ impl TestFixture {
             .build();
         self.context.run(session);
     }
+
+    pub fn withdraw(&mut self, sender: Sender, cspr_amount: U512) {
+        self.call(
+            sender,
+            "withdraw",
+            runtime_args! {
+                "cspr_amount" => cspr_amount,
+            },
+        )
+    }
+
 }

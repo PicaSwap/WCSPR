@@ -36,6 +36,27 @@ mod tests {
     }
 
     #[test]
+    fn should_withdraw() {
+        let mut fixture = TestFixture::install_contract();
+
+        let cspr_deposit_amount = U512::from(42);
+        let deposited_wcspr = U256::from(42);
+        let sender = Sender(fixture.ali);
+
+        let initial_balance = fixture.balance_of(Key::from(fixture.ali)).unwrap();
+        let expected_balance = initial_balance + deposited_wcspr;
+
+        fixture.deposit(sender, cspr_deposit_amount);
+
+        assert_eq!(fixture.balance_of(Key::from(fixture.ali)), Some(expected_balance));
+
+        fixture.withdraw(sender, cspr_deposit_amount);
+
+        assert_eq!(fixture.balance_of(Key::from(fixture.ali)), Some(initial_balance));
+    }
+
+
+    #[test]
     fn should_transfer() {
         let mut fixture = TestFixture::install_contract();
         assert_eq!(fixture.balance_of(Key::from(fixture.bob)), None);
