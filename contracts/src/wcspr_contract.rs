@@ -108,6 +108,7 @@ pub extern "C" fn deposit() {
 
     let contract_main_purse: URef = get_key("main_purse").unwrap_or_revert();
 
+    // TODO: this line causes test crash with ForgedReference URef
     // Save CSPR provided by user into our contract
     let _ = system::transfer_from_purse_to_purse(tmp_purse, contract_main_purse, cspr_amount, None);
 
