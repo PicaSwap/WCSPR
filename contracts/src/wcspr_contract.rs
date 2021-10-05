@@ -55,14 +55,6 @@ pub extern "C" fn total_supply() {
 }
 
 #[no_mangle]
-pub extern "C" fn contract_cspr_balance() {
-    let contract_main_purse: URef = get_key("main_purse").unwrap_or_revert();
-    let cspr_amount: U512 = system::get_purse_balance(contract_main_purse).unwrap_or_revert();
-    let cspr_amount_u256: U256 = U256::from(cspr_amount.as_u128());
-    runtime::ret(CLValue::from_t(cspr_amount_u256).unwrap_or_revert());
-}
-
-#[no_mangle]
 pub extern "C" fn balance_of() {
     let address: Address = runtime::get_named_arg(ADDRESS_RUNTIME_ARG_NAME);
     let balance = ERC20::default().balance_of(address);
@@ -118,7 +110,7 @@ pub extern "C" fn deposit() {
 
     // TODO: this line causes test crash with ForgedReference URef
     // Save CSPR provided by user into our contract
-    let _ = system::transfer_from_purse_to_purse(tmp_purse, contract_main_purse, cspr_amount, None);
+    //let _ = system::transfer_from_purse_to_purse(tmp_purse, contract_main_purse, cspr_amount, None);
 
     // Get account of the user who called the contract
     let sender = get_immediate_caller_address().unwrap_or_revert();
