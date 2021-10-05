@@ -126,6 +126,11 @@ impl TestFixture {
             .unwrap()
     }
 
+    pub fn contract_cspr_balance(&self) -> U256 {
+        self.query_contract("contract_cspr_balance")
+            .unwrap()
+    }
+
     pub fn balance_of(&self, account: Key) -> Option<U256> {
         let item_key = base64::encode(&account.to_bytes().unwrap());
 

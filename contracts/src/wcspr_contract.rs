@@ -55,6 +55,14 @@ pub extern "C" fn total_supply() {
 }
 
 #[no_mangle]
+pub extern "C" fn contract_cspr_balance() {
+    let contract_main_purse: URef = get_key("main_purse").unwrap_or_revert();
+    let cspr_amount: U512 = system::get_purse_balance(contract_main_purse).unwrap_or_revert();
+    let cspr_amount_u256: U256 = U256::from(cspr_amount.as_u128());
+    runtime::ret(CLValue::from_t(cspr_amount_u256).unwrap_or_revert());
+}
+
+#[no_mangle]
 pub extern "C" fn balance_of() {
     let address: Address = runtime::get_named_arg(ADDRESS_RUNTIME_ARG_NAME);
     let balance = ERC20::default().balance_of(address);

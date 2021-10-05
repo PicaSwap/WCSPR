@@ -17,6 +17,7 @@ mod tests {
             fixture.balance_of(Key::from(fixture.ali)),
             Some(TestFixture::token_total_supply())
         );
+        assert_eq!(fixture.contract_cspr_balance(), U256::from(0))
     }
 
     #[test]
@@ -30,7 +31,6 @@ mod tests {
         fixture.deposit(sender, cspr_deposit_amount);
 
         assert_eq!(fixture.balance_of(Key::from(fixture.ali)), Some(expected_wcspr));
-
     }
 
     #[test]
