@@ -137,8 +137,9 @@ pub extern "C" fn withdraw() {
 
     let contract_main_purse_key = runtime::get_key("main_purse").unwrap_or_revert();
     let contract_main_purse = contract_main_purse_key.as_uref().unwrap_or_revert();
+    let main_purse_balance : U512 = system::get_purse_balance(*contract_main_purse).unwrap_or_revert();
 
-    if balance >= cspr_amount_u256 {
+    if balance >= cspr_amount_u256 &&  cspr_amount < main_purse_balance {
         system::transfer_from_purse_to_account(
             *contract_main_purse, 
             *sender.as_account_hash().unwrap_or_revert(), 
