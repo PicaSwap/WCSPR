@@ -112,9 +112,13 @@ pub extern "C" fn deposit() {
     let contract_main_purse_key = runtime::get_key("main_purse").unwrap_or_revert();
     let contract_main_purse = contract_main_purse_key.as_uref().unwrap_or_revert();
 
+    let main_purse_balance : U512 = system::get_purse_balance(*contract_main_purse).unwrap_or_revert();
     // TODO: this line causes test crash with ForgedReference URef
     // Save CSPR provided by user into our contract
     let _ = system::transfer_from_purse_to_purse(tmp_purse, *contract_main_purse, cspr_amount, None);
+
+    let main_purse_balance_after : U512 = system::get_purse_balance(*contract_main_purse).unwrap_or_revert();
+    assert_eq!(main_purse_balance + cspr_amount, main_purse_balance_after);
 
     // Get account of the user who called the contract
     let sender = get_immediate_caller_address().unwrap_or_revert();
