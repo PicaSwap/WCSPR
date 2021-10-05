@@ -3,8 +3,7 @@ mod test_fixture;
 
 #[cfg(test)]
 mod tests {
-    use casper_types::{Key, U256, U512, CLType};
-    use casper_contract::contract_api::runtime;
+    use casper_types::{Key, U256, U512};
 
     use crate::test_fixture::{Sender, TestFixture};
 
@@ -18,15 +17,7 @@ mod tests {
             fixture.balance_of(Key::from(fixture.ali)),
             Some(TestFixture::token_total_supply())
         );
-        let contract_cspr_balance:U256 = fixture.contract_cspr_balance();
-        let zero_balance:U256 = U256::from(0);
-        runtime::print(format!("contract_cspr_balance {}", contract_cspr_balance.as_str()));
-        runtime::print(format!("zero_balance {}", zero_balance.as_str()));
-        //runtime::print(contract_cspr_balance.cl_value);
-        //runtime::print(zero_balance.cl_value);
-        //runtime::print(contract_cspr_balance.into_t());
-        //runtime::print(zero_balance.into_t());
-        //assert_eq!(contract_cspr_balance, zero_balance);
+        assert_eq!(fixture.contract_cspr_balance(), U256::from(0))
     }
 
     #[test]
