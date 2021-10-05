@@ -6,8 +6,12 @@ compile_error!("target arch should be wasm32: compile with '--target wasm32-unkn
 
 extern crate alloc;
 
-//mod entry_points;
+mod entry_points;
 
+use casper_types::RuntimeArgs;
+use casper_types::ContractHash;
+use casper_types::HashAddr;
+use casper_types::Key;
 use alloc::string::String;
 use core::convert::TryInto;
 
@@ -18,11 +22,13 @@ use casper_erc20::{
         NAME_RUNTIME_ARG_NAME, OWNER_RUNTIME_ARG_NAME, RECIPIENT_RUNTIME_ARG_NAME,
         SPENDER_RUNTIME_ARG_NAME, SYMBOL_RUNTIME_ARG_NAME, TOTAL_SUPPLY_RUNTIME_ARG_NAME,
     },
-    Address, ERC20, Error, entry_points
+    Address, ERC20, Error
 };
 use casper_types::{CLValue, CLTyped, U256, URef, U512, bytesrepr::{FromBytes, ToBytes}, system::CallStackElement};
 
-const CONTRACT_KEY_NAME: &str = "wcspr_token_contract";
+// TODO: understand why changing the name makes everything crash
+//const CONTRACT_KEY_NAME: &str = "wcspr_token_contract";
+const CONTRACT_KEY_NAME: &str = "erc20_token_contract";
 
 #[no_mangle]
 pub extern "C" fn name() {
@@ -138,35 +144,6 @@ pub extern "C" fn withdraw() {
 }
 
 #[no_mangle]
-fn call() {
-    let name: String = runtime::get_named_arg(NAME_RUNTIME_ARG_NAME);
-    let symbol: String = runtime::get_named_arg(SYMBOL_RUNTIME_ARG_NAME);
-    let decimals = runtime::get_named_arg(DECIMALS_RUNTIME_ARG_NAME);
-    let initial_supply = runtime::get_named_arg(TOTAL_SUPPLY_RUNTIME_ARG_NAME);
-
-    let _ = ERC20::install(name, symbol, decimals, initial_supply);
-
-    /*
-    ERC20::install_custom(
-        name,
-        symbol,
-        decimals,
-        initial_supply,
-        CONTRACT_KEY_NAME,
-        entry_points::default(),
-    ).unwrap_or_revert();
-
-    let key: Key = runtime::get_key("my_name").unwrap_or_revert();
-    let hash: HashAddr = key.into_hash().unwrap_or_revert();
-    let contract_hash = ContractHash::new(hash);
-
-    let _: () = runtime::call_contract(contract_hash, "init", RuntimeArgs::new());
-
-    */
-
-}
-
-#[no_mangle]
 pub extern "C" fn init() {
     let value: Option<bool> = get_key("initialized"); 
     match value {
@@ -176,6 +153,30 @@ pub extern "C" fn init() {
             set_key("initialized", true);
         },
     }
+}
+
+#[no_mangle]
+fn call() {
+    let name: String = runtime::get_named_arg(NAME_RUNTIME_ARG_NAME);
+    let symbol: String = runtime::get_named_arg(SYMBOL_RUNTIME_ARG_NAME);
+    let decimals = runtime::get_named_arg(DECIMALS_RUNTIME_ARG_NAME);
+    let initial_supply = runtime::get_named_arg(TOTAL_SUPPLY_RUNTIME_ARG_NAME);
+
+    let _ = ERC20::install_custom(
+        name,
+        symbol,
+        decimals,
+        initial_supply,
+        CONTRACT_KEY_NAME,
+        entry_points::default(),
+    );
+
+    let key: Key = runtime::get_key(CONTRACT_KEY_NAME).unwrap_or_revert();
+    let hash: HashAddr = key.into_hash().unwrap_or_revert();
+    let contract_hash = ContractHash::new(hash);
+
+    let _: () = runtime::call_contract(contract_hash, "init", RuntimeArgs::new());
+
 }
 
 
