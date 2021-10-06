@@ -4,13 +4,13 @@ use casper_types::bytesrepr::ToBytes;
 use casper_types::CLTyped;
 use casper_types::bytesrepr::FromBytes;
 use casper_contract::{contract_api::{runtime, storage}, unwrap_or_revert::UnwrapOrRevert};
-use casper_types::{URef, system::CallStackElement};
+use casper_types::{Key, URef, system::CallStackElement};
 use core::convert::TryInto;
 
 // Helper functions
 
 pub fn set_main_purse(purse: URef) {
-    runtime::put_key("main_purse", purse.into())
+    runtime::put_key("main_purse", Key::from(purse))
 }
 
 pub fn get_main_purse() -> URef {
