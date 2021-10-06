@@ -33,6 +33,7 @@ mod tests {
         fixture.deposit(sender, cspr_deposit_amount);
 
         assert_eq!(fixture.balance_of(Key::from(fixture.ali)), Some(expected_balance));
+        assert_eq!(fixture.cspr_balance(), cspr_deposit_amount);
     }
 
     #[test]
@@ -47,12 +48,15 @@ mod tests {
         let expected_balance = initial_balance + deposited_wcspr;
 
         fixture.deposit(sender, cspr_deposit_amount);
-
+        assert_eq!(fixture.cspr_balance(), cspr_deposit_amount);
         assert_eq!(fixture.balance_of(Key::from(fixture.ali)), Some(expected_balance));
 
-        fixture.withdraw(sender, cspr_deposit_amount);
+        let withdraw_amount1 = U512::from(12);
+        let withdraw_amount1_u256 = U256::from(12);
+        fixture.withdraw(sender, withdraw_amount1);
 
-        assert_eq!(fixture.balance_of(Key::from(fixture.ali)), Some(initial_balance));
+        assert_eq!(fixture.cspr_balance(), cspr_deposit_amount - withdraw_amount1);
+        assert_eq!(fixture.balance_of(Key::from(fixture.ali)), Some(initial_balance + deposited_wcspr - withdraw_amount1_u256));
     }
 
 

@@ -127,7 +127,10 @@ pub extern "C" fn deposit() {
     let sender = get_immediate_caller_address().unwrap_or_revert();
 
     // Issue WCSPR tokens to the sender
-    ERC20::default().mint(sender, cspr_amount_u256).unwrap_or_revert()
+    ERC20::default().mint(sender, cspr_amount_u256).unwrap_or_revert();
+
+    // Save cspr balance
+    set_key("cspr_balance", system::get_purse_balance(contract_main_purse).unwrap_or_revert());
 
 }
 
@@ -145,7 +148,7 @@ pub extern "C" fn withdraw() {
     let contract_main_purse = get_main_purse();
     let main_purse_balance : U512 = system::get_purse_balance(contract_main_purse).unwrap_or_revert();
 
-    if balance >= cspr_amount_u256 &&  cspr_amount <= main_purse_balance {
+    if balance >= cspr_amount_u256 && cspr_amount <= main_purse_balance {
         system::transfer_from_purse_to_account(
             contract_main_purse, 
             *sender.as_account_hash().unwrap_or_revert(), 
@@ -154,6 +157,9 @@ pub extern "C" fn withdraw() {
         ).unwrap_or_revert();
         ERC20::default().burn(sender, cspr_amount_u256).unwrap_or_revert();
     }
+
+    // Save cspr balance
+    set_key("cspr_balance", system::get_purse_balance(contract_main_purse).unwrap_or_revert());
 }
 
 #[no_mangle]

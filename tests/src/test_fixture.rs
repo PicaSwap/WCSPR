@@ -112,6 +112,10 @@ impl TestFixture {
         Self::TOKEN_TOTAL_SUPPLY_AS_U64.into()
     }
 
+    pub fn cspr_balance(&self) -> U512 {
+        self.query_contract("cspr_balance").unwrap()
+    }
+
     pub fn token_name(&self) -> String {
         self.query_contract(consts::NAME_RUNTIME_ARG_NAME).unwrap()
     }
