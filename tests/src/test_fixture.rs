@@ -39,6 +39,7 @@ impl TestFixture {
     const TOKEN_TOTAL_SUPPLY_AS_U64: u64 = 1000;
 
     pub fn install_contract() -> TestFixture {
+        println!("DEBUG MESSAGE: install contract");
         let ali = PublicKey::ed25519_from_bytes([3u8; 32]).unwrap();
         let bob = PublicKey::ed25519_from_bytes([6u8; 32]).unwrap();
         let joe = PublicKey::ed25519_from_bytes([9u8; 32]).unwrap();
