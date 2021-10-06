@@ -32,9 +32,7 @@ use casper_erc20::{
 };
 use casper_types::{CLValue, U256, URef, U512};
 
-// TODO: understand why changing the name makes everything crash
-//const CONTRACT_KEY_NAME: &str = "wcspr_token_contract";
-const CONTRACT_KEY_NAME: &str = "erc20_token_contract";
+const CONTRACT_KEY_NAME: &str = "wcspr_token";
 
 #[no_mangle]
 pub extern "C" fn name() {

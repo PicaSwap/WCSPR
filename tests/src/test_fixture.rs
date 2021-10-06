@@ -11,8 +11,7 @@ use casper_types::{
 };
 
 const CONTRACT_ERC20_TOKEN: &str = "wcspr.wasm";
-//const CONTRACT_KEY_NAME: &str = "wcspr_token_contract";
-const CONTRACT_KEY_NAME: &str = "erc20_token_contract";
+const CONTRACT_KEY_NAME: &str = "wcspr_token";
 
 const CONTRACT_PRE_DEPOSIT: &str = "pre_deposit.wasm";
 
