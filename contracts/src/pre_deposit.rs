@@ -1,7 +1,7 @@
 #![no_main]
 
-use casper_contract::{contract_api::{account, runtime, system}};
-use casper_types::{URef, U512, ContractHash, runtime_args};
+use casper_contract::{contract_api::{account, runtime, system}, unwrap_or_revert::UnwrapOrRevert};
+use casper_types::{ContractHash, HashAddr, Key, U512, URef, runtime_args};
 use casper_types::RuntimeArgs;
 
 
@@ -24,7 +24,9 @@ fn call() {
     let _ = system::transfer_from_purse_to_purse(sender_purse, tmp_purse, cspr_amount, None);
 
     // WCSPR contract hash address passed as an argument to this contract
-    let wcspr_contract_hash: ContractHash = runtime::get_named_arg("wcspr_contract_hash");
+    let wcspr_contract_key: Key = runtime::get_named_arg("wcspr_contract_hash_key");
+    let _wcspr_contract_hash: HashAddr  = wcspr_contract_key.into_hash().unwrap_or_revert();
+    let wcspr_contract_hash: ContractHash = ContractHash::new(_wcspr_contract_hash);
     runtime::call_contract(wcspr_contract_hash, "deposit", runtime_args!{
         "tmp_purse" => tmp_purse
     })

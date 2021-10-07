@@ -202,7 +202,7 @@ impl TestFixture {
         let code = Code::from(CONTRACT_PRE_DEPOSIT);
         let session = SessionBuilder::new(code, runtime_args!{
             "cspr_amount" => cspr_amount,
-            "wcspr_contract_hash" => self.contract_hash()
+            "wcspr_contract_hash_key" => Key::from(self.contract_hash())
         })
             .with_address(address)
             .with_authorization_keys(&[address])
