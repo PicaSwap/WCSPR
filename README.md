@@ -2,6 +2,8 @@
 
 Implementation of ERC20 token, representing wrapped version of CSPR (native token of Casper Network).
 
+Demo: https://www.loom.com/share/c52424ee09944fa6b8e6716c369b9496
+
 ## Wrapping Casper
 
 Any operation that ends with this contract holding Wrapped Casper is prohibited.
