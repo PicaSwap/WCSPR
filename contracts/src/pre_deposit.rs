@@ -6,9 +6,19 @@ use casper_contract::{
 };
 use casper_erc20::Address;
 use casper_erc20::Error;
+use casper_types::system::CallStackElement;
 use casper_types::RuntimeArgs;
-use casper_types::{runtime_args, ContractHash, HashAddr, Key, URef, U256, U512};
-use casper_types::{system::CallStackElement};
+use casper_types::{runtime_args, ApiError, ContractHash, HashAddr, Key, URef, U256, U512};
+pub enum DepositError {
+    ExceedUserLimit = 0,
+    CannotWithdrawZero = 1,
+}
+
+impl From<DepositError> for ApiError {
+    fn from(error: DepositError) -> ApiError {
+        ApiError::User(error as u16)
+    }
+}
 
 /// Gets the first call stack element of the current execution.
 pub fn get_first_call_stack_item() -> Option<CallStackElement> {
@@ -35,7 +45,6 @@ pub fn call_stack_element_to_address(call_stack_element: CallStackElement) -> Ad
     }
 }
 
-
 pub(crate) fn get_first_caller_address_() -> Result<Address, Error> {
     get_first_call_stack_item()
         .map(call_stack_element_to_address)
@@ -50,24 +59,38 @@ fn call() {
 
     // how many cspr tokens to transfer
     let cspr_amount: U512 = runtime::get_named_arg("cspr_amount");
-
-    // Get account of the user who called the contract
-    let sender: Address = get_first_caller_address_().unwrap_or_revert();
+    let multiplier_9: U256 = (U256::from(10)).pow(U256::from(9));
+    let cspr_amount_u256: U256 = U256::from(cspr_amount.as_u128()) * multiplier_9;
 
     // WCSPR contract hash address passed as an argument to this contract
     let wcspr_contract_key: Key = runtime::get_named_arg("wcspr_contract_hash_key");
     let _wcspr_contract_hash: HashAddr = wcspr_contract_key.into_hash().unwrap_or_revert();
     let wcspr_contract_hash: ContractHash = ContractHash::new(_wcspr_contract_hash);
 
+    // Stop deposit if total supply exceed limits
+    let total_supply: U256 =
+        runtime::call_contract::<U256>(wcspr_contract_hash, "total_supply", runtime_args! {});
+
+    // Get account of the user who called the contract
+    let sender: Address = get_first_caller_address_().unwrap_or_revert();
+
     // Check if user does not exceed limits
     // Read how much user has WCSPR on it's balance
-    /*let sender_wcspr_balance: U256 = runtime::call_contract::<U256>(
+    let sender_wcspr_balance: U256 = runtime::call_contract::<U256>(
         wcspr_contract_hash,
         "balance_of",
         runtime_args! {
             "address" => sender
         },
-    );*/
+    );
+
+    let multiplier_18: U256 = (U256::from(10)).pow(U256::from(18));
+    let limit: U256 = U256::from(100);
+    let user_limit: U256 = limit * multiplier_18;
+
+    if (sender_wcspr_balance + cspr_amount_u256) >= user_limit {
+        runtime::revert(DepositError::ExceedUserLimit)
+    };
 
     // Purse with CSPR tokens of the user who call the contract
     let sender_purse: URef = account::get_main_purse();

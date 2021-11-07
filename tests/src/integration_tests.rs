@@ -3,6 +3,7 @@ mod test_fixture;
 
 #[cfg(test)]
 mod tests {
+    use casper_engine_test_support::TestContext;
     use casper_types::{Key, U256, U512};
 
     use crate::test_fixture::{Sender, TestFixture};
@@ -23,8 +24,8 @@ mod tests {
     fn should_deposit() {
         let mut fixture = TestFixture::install_contract();
 
-        let cspr_deposit_amount = U512::from(42);
-        let deposited_wcspr = U256::from(42);
+        let cspr_deposit_amount = U512::from(100);
+        let deposited_wcspr = U256::from(100);
         let sender = Sender(fixture.ali);
 
         let initial_balance = fixture.balance_of(Key::from(fixture.ali)).unwrap();
@@ -32,8 +33,32 @@ mod tests {
 
         fixture.deposit(sender, cspr_deposit_amount);
 
-        assert_eq!(fixture.balance_of(Key::from(fixture.ali)), Some(expected_balance));
+        assert_eq!(
+            fixture.balance_of(Key::from(fixture.ali)),
+            Some(expected_balance)
+        );
         assert_eq!(fixture.cspr_balance(), cspr_deposit_amount);
+    }
+
+    #[should_panic(expected = "ApiError::User(0) [65536]")]
+    #[test]
+    fn should_not_deposit_more_then_limit() {
+        let mut fixture = TestFixture::install_contract();
+
+        let cspr_deposit_amount = U512::from(101) * (U512::from(10)).pow(U512::from(9));
+        let deposited_wcspr = U256::from(101) * (U256::from(10)).pow(U256::from(18));
+        let sender = Sender(fixture.ali);
+
+        let initial_balance = fixture.balance_of(Key::from(fixture.ali)).unwrap();
+        let expected_balance = initial_balance + deposited_wcspr;
+
+        fixture.deposit(sender, cspr_deposit_amount);
+
+        assert_eq!(
+            fixture.balance_of(Key::from(fixture.ali)),
+            Some(U256::from(0))
+        );
+        assert_eq!(fixture.cspr_balance(), U512::from(0));
     }
 
     #[test]
@@ -49,16 +74,24 @@ mod tests {
 
         fixture.deposit(sender, cspr_deposit_amount);
         assert_eq!(fixture.cspr_balance(), cspr_deposit_amount);
-        assert_eq!(fixture.balance_of(Key::from(fixture.ali)), Some(expected_balance));
+        assert_eq!(
+            fixture.balance_of(Key::from(fixture.ali)),
+            Some(expected_balance)
+        );
 
         let withdraw_amount1 = U512::from(12);
         let withdraw_amount1_u256 = U256::from(12);
         fixture.withdraw(sender, withdraw_amount1);
 
-        assert_eq!(fixture.cspr_balance(), cspr_deposit_amount - withdraw_amount1);
-        assert_eq!(fixture.balance_of(Key::from(fixture.ali)), Some(initial_balance + deposited_wcspr - withdraw_amount1_u256));
+        assert_eq!(
+            fixture.cspr_balance(),
+            cspr_deposit_amount - withdraw_amount1
+        );
+        assert_eq!(
+            fixture.balance_of(Key::from(fixture.ali)),
+            Some(initial_balance + deposited_wcspr - withdraw_amount1_u256)
+        );
     }
-
 
     #[test]
     fn should_transfer() {
