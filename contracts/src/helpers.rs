@@ -80,20 +80,3 @@ pub(crate) fn get_immediate_caller_address() -> Result<Address, Error> {
         .map(call_stack_element_to_address)
         .ok_or(Error::InvalidContext)
 }
-
-pub fn get_caller() -> Key {
-    let mut callstack = runtime::get_call_stack();
-    callstack.pop();
-    match callstack.last().unwrap_or_revert() {
-        CallStackElement::Session { account_hash } => (*account_hash).into(),
-        CallStackElement::StoredSession {
-            account_hash,
-            contract_package_hash: _,
-            contract_hash: _,
-        } => (*account_hash).into(),
-        CallStackElement::StoredContract {
-            contract_package_hash: _,
-            contract_hash,
-        } => (*contract_hash).into(),
-    }
-}

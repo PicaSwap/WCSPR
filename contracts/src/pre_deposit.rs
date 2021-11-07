@@ -5,11 +5,42 @@ use casper_contract::{
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_erc20::Address;
+use casper_erc20::Error;
 use casper_types::RuntimeArgs;
 use casper_types::{runtime_args, ContractHash, HashAddr, Key, URef, U256, U512};
+use casper_types::{system::CallStackElement};
 
-mod helpers;
-use crate::helpers::{get_caller, get_immediate_caller_address};
+/// Gets the first call stack element of the current execution.
+pub fn get_first_call_stack_item() -> Option<CallStackElement> {
+    let call_stack = runtime::get_call_stack();
+    call_stack.into_iter().rev().nth(0)
+}
+
+/// Returns address based on a [`CallStackElement`].
+///
+/// For `Session` and `StoredSession` variants it will return account hash, and for `StoredContract`
+/// case it will use contract hash as the address.
+pub fn call_stack_element_to_address(call_stack_element: CallStackElement) -> Address {
+    match call_stack_element {
+        CallStackElement::Session { account_hash } => Address::from(account_hash),
+        CallStackElement::StoredSession { account_hash, .. } => {
+            // Stored session code acts in account's context, so if stored session wants to interact
+            // with an ERC20 token caller's address will be used.
+            Address::from(account_hash)
+        }
+        CallStackElement::StoredContract {
+            contract_package_hash,
+            ..
+        } => Address::from(contract_package_hash),
+    }
+}
+
+
+pub(crate) fn get_first_caller_address_() -> Result<Address, Error> {
+    get_first_call_stack_item()
+        .map(call_stack_element_to_address)
+        .ok_or(Error::InvalidContext)
+}
 
 #[no_mangle]
 fn call() {
@@ -21,8 +52,7 @@ fn call() {
     let cspr_amount: U512 = runtime::get_named_arg("cspr_amount");
 
     // Get account of the user who called the contract
-    //let sender: Address = get_immediate_caller_address().unwrap_or_revert();
-    let sender_key: Key = get_caller();
+    let sender: Address = get_first_caller_address_().unwrap_or_revert();
 
     // WCSPR contract hash address passed as an argument to this contract
     let wcspr_contract_key: Key = runtime::get_named_arg("wcspr_contract_hash_key");
