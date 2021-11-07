@@ -1,10 +1,13 @@
-use casper_erc20::Error;
+use casper_contract::{
+    contract_api::{runtime, storage},
+    unwrap_or_revert::UnwrapOrRevert,
+};
 use casper_erc20::Address;
+use casper_erc20::Error;
+use casper_types::bytesrepr::FromBytes;
 use casper_types::bytesrepr::ToBytes;
 use casper_types::CLTyped;
-use casper_types::bytesrepr::FromBytes;
-use casper_contract::{contract_api::{runtime, storage}, unwrap_or_revert::UnwrapOrRevert};
-use casper_types::{Key, URef, system::CallStackElement};
+use casper_types::{system::CallStackElement, Key, URef};
 use core::convert::TryInto;
 
 // Helper functions
@@ -16,7 +19,7 @@ pub fn set_main_purse(purse: URef) {
 pub fn get_main_purse() -> URef {
     let contract_main_purse_key = runtime::get_key("main_purse").unwrap_or_revert();
     let contract_main_purse = contract_main_purse_key.as_uref().unwrap_or_revert();
-    *contract_main_purse 
+    *contract_main_purse
 }
 
 pub fn get_key<T: FromBytes + CLTyped>(name: &str) -> Option<T> {
@@ -76,4 +79,21 @@ pub(crate) fn get_immediate_caller_address() -> Result<Address, Error> {
     get_immediate_call_stack_item()
         .map(call_stack_element_to_address)
         .ok_or(Error::InvalidContext)
+}
+
+pub fn get_caller() -> Key {
+    let mut callstack = runtime::get_call_stack();
+    callstack.pop();
+    match callstack.last().unwrap_or_revert() {
+        CallStackElement::Session { account_hash } => (*account_hash).into(),
+        CallStackElement::StoredSession {
+            account_hash,
+            contract_package_hash: _,
+            contract_hash: _,
+        } => (*account_hash).into(),
+        CallStackElement::StoredContract {
+            contract_package_hash: _,
+            contract_hash,
+        } => (*contract_hash).into(),
+    }
 }
