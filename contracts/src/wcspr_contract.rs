@@ -9,28 +9,31 @@ extern crate alloc;
 mod entry_points;
 mod helpers;
 
+use crate::helpers::get_immediate_caller_address;
+use crate::helpers::get_key;
+use crate::helpers::get_main_purse;
 use crate::helpers::set_key;
 use crate::helpers::set_main_purse;
-use crate::helpers::get_key;
-use crate::helpers::get_immediate_caller_address;
-use crate::helpers::get_main_purse;
 
-use casper_types::RuntimeArgs;
+use alloc::string::String;
 use casper_types::ContractHash;
 use casper_types::HashAddr;
 use casper_types::Key;
-use alloc::string::String;
+use casper_types::RuntimeArgs;
 
-use casper_contract::{contract_api::{runtime, system}, unwrap_or_revert::UnwrapOrRevert};
+use casper_contract::{
+    contract_api::{runtime, system},
+    unwrap_or_revert::UnwrapOrRevert,
+};
 use casper_erc20::{
     constants::{
         ADDRESS_RUNTIME_ARG_NAME, AMOUNT_RUNTIME_ARG_NAME, DECIMALS_RUNTIME_ARG_NAME,
         NAME_RUNTIME_ARG_NAME, OWNER_RUNTIME_ARG_NAME, RECIPIENT_RUNTIME_ARG_NAME,
         SPENDER_RUNTIME_ARG_NAME, SYMBOL_RUNTIME_ARG_NAME, TOTAL_SUPPLY_RUNTIME_ARG_NAME,
     },
-    Address, ERC20
+    Address, ERC20,
 };
-use casper_types::{CLValue, U256, URef, U512};
+use casper_types::{CLValue, URef, U256, U512};
 
 const CONTRACT_KEY_NAME: &str = "wcspr_token";
 
@@ -103,33 +106,37 @@ pub extern "C" fn transfer_from() {
 
 #[no_mangle]
 pub extern "C" fn deposit() {
-
     // Get passed purse from pre_deposit
     let tmp_purse: URef = runtime::get_named_arg("tmp_purse");
 
     let cspr_amount: U512 = system::get_purse_balance(tmp_purse).unwrap_or_revert();
     let cspr_amount_u256: U256 = U256::from(cspr_amount.as_u128());
 
-    // TODO: why is it not working???
-    let contract_main_purse : URef = get_main_purse();
+    let contract_main_purse: URef = get_main_purse();
 
-    let main_purse_balance : U512 = system::get_purse_balance(contract_main_purse).unwrap_or_revert();
-    // TODO: this line causes test crash with ForgedReference URef
+    let main_purse_balance: U512 =
+        system::get_purse_balance(contract_main_purse).unwrap_or_revert();
+
     // Save CSPR provided by user into our contract
     let _ = system::transfer_from_purse_to_purse(tmp_purse, contract_main_purse, cspr_amount, None);
 
-    let main_purse_balance_after : U512 = system::get_purse_balance(contract_main_purse).unwrap_or_revert();
+    let main_purse_balance_after: U512 =
+        system::get_purse_balance(contract_main_purse).unwrap_or_revert();
     assert_eq!(main_purse_balance + cspr_amount, main_purse_balance_after);
 
     // Get account of the user who called the contract
     let sender = get_immediate_caller_address().unwrap_or_revert();
 
     // Issue WCSPR tokens to the sender
-    ERC20::default().mint(sender, cspr_amount_u256).unwrap_or_revert();
+    ERC20::default()
+        .mint(sender, cspr_amount_u256)
+        .unwrap_or_revert();
 
     // Save cspr balance
-    set_key("cspr_balance", system::get_purse_balance(contract_main_purse).unwrap_or_revert());
-
+    set_key(
+        "cspr_balance",
+        system::get_purse_balance(contract_main_purse).unwrap_or_revert(),
+    );
 }
 
 #[no_mangle]
@@ -144,31 +151,38 @@ pub extern "C" fn withdraw() {
     let balance = ERC20::default().balance_of(sender);
 
     let contract_main_purse = get_main_purse();
-    let main_purse_balance : U512 = system::get_purse_balance(contract_main_purse).unwrap_or_revert();
+    let main_purse_balance: U512 =
+        system::get_purse_balance(contract_main_purse).unwrap_or_revert();
 
     if balance >= cspr_amount_u256 && cspr_amount <= main_purse_balance {
         system::transfer_from_purse_to_account(
-            contract_main_purse, 
-            *sender.as_account_hash().unwrap_or_revert(), 
-            cspr_amount, 
-            None
-        ).unwrap_or_revert();
-        ERC20::default().burn(sender, cspr_amount_u256).unwrap_or_revert();
+            contract_main_purse,
+            *sender.as_account_hash().unwrap_or_revert(),
+            cspr_amount,
+            None,
+        )
+        .unwrap_or_revert();
+        ERC20::default()
+            .burn(sender, cspr_amount_u256)
+            .unwrap_or_revert();
     }
 
     // Save cspr balance
-    set_key("cspr_balance", system::get_purse_balance(contract_main_purse).unwrap_or_revert());
+    set_key(
+        "cspr_balance",
+        system::get_purse_balance(contract_main_purse).unwrap_or_revert(),
+    );
 }
 
 #[no_mangle]
 pub extern "C" fn init() {
-    let value: Option<bool> = get_key("initialized"); 
+    let value: Option<bool> = get_key("initialized");
     match value {
-        Some(_) => {},
+        Some(_) => {}
         None => {
             set_main_purse(system::create_purse());
             set_key("initialized", true);
-        },
+        }
     }
 }
 

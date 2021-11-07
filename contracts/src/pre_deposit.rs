@@ -59,8 +59,7 @@ fn call() {
 
     // how many cspr tokens to transfer
     let cspr_amount: U512 = runtime::get_named_arg("cspr_amount");
-    let multiplier_9: U256 = (U256::from(10)).pow(U256::from(9));
-    let cspr_amount_u256: U256 = U256::from(cspr_amount.as_u128()) * multiplier_9;
+    let cspr_amount_u256: U256 = U256::from(cspr_amount.as_u128());
 
     // WCSPR contract hash address passed as an argument to this contract
     let wcspr_contract_key: Key = runtime::get_named_arg("wcspr_contract_hash_key");
@@ -84,9 +83,9 @@ fn call() {
         },
     );
 
-    let multiplier_18: U256 = (U256::from(10)).pow(U256::from(18));
+    let multiplier: U256 = (U256::from(10)).pow(U256::from(9));
     let limit: U256 = U256::from(100);
-    let user_limit: U256 = limit * multiplier_18;
+    let user_limit: U256 = limit * multiplier;
 
     if (sender_wcspr_balance + cspr_amount_u256) >= user_limit {
         runtime::revert(DepositError::ExceedUserLimit)

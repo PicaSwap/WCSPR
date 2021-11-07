@@ -42,11 +42,26 @@ mod tests {
 
     #[should_panic(expected = "ApiError::User(0) [65536]")]
     #[test]
-    fn should_not_deposit_more_then_limit() {
+    fn should_not_deposit_more_then_limit_1() {
         let mut fixture = TestFixture::install_contract();
 
         let cspr_deposit_amount = U512::from(101) * (U512::from(10)).pow(U512::from(9));
-        let deposited_wcspr = U256::from(101) * (U256::from(10)).pow(U256::from(18));
+        let deposited_wcspr = U256::from(101) * (U256::from(10)).pow(U256::from(9));
+        let sender = Sender(fixture.ali);
+
+        let initial_balance = fixture.balance_of(Key::from(fixture.ali)).unwrap();
+        let expected_balance = initial_balance + deposited_wcspr;
+
+        fixture.deposit(sender, cspr_deposit_amount);
+    }
+
+    #[should_panic(expected = "ApiError::User(0) [65536]")]
+    #[test]
+    fn should_not_deposit_more_then_limit_2() {
+        let mut fixture = TestFixture::install_contract();
+
+        let cspr_deposit_amount = U512::from(55) * (U512::from(10)).pow(U512::from(9));
+        let deposited_wcspr = U256::from(55) * (U256::from(10)).pow(U256::from(9));
         let sender = Sender(fixture.ali);
 
         let initial_balance = fixture.balance_of(Key::from(fixture.ali)).unwrap();
@@ -56,9 +71,11 @@ mod tests {
 
         assert_eq!(
             fixture.balance_of(Key::from(fixture.ali)),
-            Some(U256::from(0))
+            Some(expected_balance)
         );
-        assert_eq!(fixture.cspr_balance(), U512::from(0));
+        assert_eq!(fixture.cspr_balance(), cspr_deposit_amount);
+
+        fixture.deposit(sender, cspr_deposit_amount);
     }
 
     #[test]
