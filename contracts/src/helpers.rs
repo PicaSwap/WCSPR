@@ -1,10 +1,13 @@
-use casper_erc20::Error;
+use casper_contract::{
+    contract_api::{runtime, storage},
+    unwrap_or_revert::UnwrapOrRevert,
+};
 use casper_erc20::Address;
+use casper_erc20::Error;
+use casper_types::bytesrepr::FromBytes;
 use casper_types::bytesrepr::ToBytes;
 use casper_types::CLTyped;
-use casper_types::bytesrepr::FromBytes;
-use casper_contract::{contract_api::{runtime, storage}, unwrap_or_revert::UnwrapOrRevert};
-use casper_types::{Key, URef, system::CallStackElement};
+use casper_types::{system::CallStackElement, Key, URef};
 use core::convert::TryInto;
 
 // Helper functions
@@ -16,7 +19,7 @@ pub fn set_main_purse(purse: URef) {
 pub fn get_main_purse() -> URef {
     let contract_main_purse_key = runtime::get_key("main_purse").unwrap_or_revert();
     let contract_main_purse = contract_main_purse_key.as_uref().unwrap_or_revert();
-    *contract_main_purse 
+    *contract_main_purse
 }
 
 pub fn get_key<T: FromBytes + CLTyped>(name: &str) -> Option<T> {

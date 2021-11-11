@@ -10,7 +10,7 @@ use casper_types::{
     runtime_args, AsymmetricType, CLTyped, ContractHash, Key, PublicKey, RuntimeArgs, U256, U512,
 };
 
-const CONTRACT_ERC20_TOKEN: &str = "wcspr.wasm";
+const CONTRACT_WCSPR_TOKEN: &str = "wcspr.wasm";
 const CONTRACT_KEY_NAME: &str = "wcspr_token";
 
 const CONTRACT_PRE_DEPOSIT: &str = "pre_deposit.wasm";
@@ -35,7 +35,7 @@ impl TestFixture {
     pub const TOKEN_NAME: &'static str = "Wrapped Casper";
     pub const TOKEN_SYMBOL: &'static str = "WCSPR";
     pub const TOKEN_DECIMALS: u8 = 9;
-    const TOKEN_TOTAL_SUPPLY_AS_U64: u64 = 1000;
+    // const TOKEN_TOTAL_SUPPLY_AS_U64: u64 = 0;
 
     pub fn install_contract() -> TestFixture {
         println!("DEBUG MESSAGE: install contract");
@@ -48,12 +48,14 @@ impl TestFixture {
             .with_public_key(bob.clone(), U512::from(500_000_000_000_000_000u64))
             .build();
 
-        let session_code = Code::from(CONTRACT_ERC20_TOKEN);
+        let session_code = Code::from(CONTRACT_WCSPR_TOKEN);
         let session_args = runtime_args! {
             consts::NAME_RUNTIME_ARG_NAME => TestFixture::TOKEN_NAME,
             consts::SYMBOL_RUNTIME_ARG_NAME => TestFixture::TOKEN_SYMBOL,
             consts::DECIMALS_RUNTIME_ARG_NAME => TestFixture::TOKEN_DECIMALS,
-            consts::TOTAL_SUPPLY_RUNTIME_ARG_NAME => TestFixture::token_total_supply()
+            consts::TOTAL_SUPPLY_RUNTIME_ARG_NAME => U256::from(0)
+            // consts::TOTAL_SUPPLY_RUNTIME_ARG_NAME => U256::from(TestFixture::TOKEN_TOTAL_SUPPLY_AS_U64)
+            // consts::TOTAL_SUPPLY_RUNTIME_ARG_NAME => TestFixture::token_total_supply()
         };
 
         let session = SessionBuilder::new(session_code, session_args)
@@ -108,8 +110,10 @@ impl TestFixture {
         self.context.run(session);
     }
 
-    pub fn token_total_supply() -> U256 {
-        Self::TOKEN_TOTAL_SUPPLY_AS_U64.into()
+    pub fn token_total_supply(&self) -> U256 {
+        // Self::TOKEN_TOTAL_SUPPLY_AS_U64.into()
+        self.query_contract(consts::TOTAL_SUPPLY_RUNTIME_ARG_NAME)
+            .unwrap()
     }
 
     pub fn cspr_balance(&self) -> U512 {
@@ -200,13 +204,16 @@ impl TestFixture {
     pub fn deposit(&mut self, sender: Sender, cspr_amount: U512) {
         let Sender(address) = sender;
         let code = Code::from(CONTRACT_PRE_DEPOSIT);
-        let session = SessionBuilder::new(code, runtime_args!{
-            "cspr_amount" => cspr_amount,
-            "wcspr_contract_hash_key" => Key::from(self.contract_hash())
-        })
-            .with_address(address)
-            .with_authorization_keys(&[address])
-            .build();
+        let session = SessionBuilder::new(
+            code,
+            runtime_args! {
+                "cspr_amount" => cspr_amount,
+                "wcspr_contract_hash_key" => Key::from(self.contract_hash())
+            },
+        )
+        .with_address(address)
+        .with_authorization_keys(&[address])
+        .build();
         self.context.run(session);
     }
 
@@ -219,5 +226,4 @@ impl TestFixture {
             },
         )
     }
-
 }
